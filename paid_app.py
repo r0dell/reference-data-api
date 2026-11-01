@@ -5,11 +5,10 @@ Umgebungsvariablen:
   X402_NETWORK        "testnet" (Base Sepolia, Standard) oder "mainnet" (Base).
   CDP_API_KEY_ID      Coinbase-Developer-Platform-Key. Für mainnet und Bazaar-Listing nötig.
   CDP_API_KEY_SECRET  dazugehöriges Secret.
-  EIA_API_KEY         Gratis-Schlüssel der EIA (nur für /v1/energy-stocks).
 
 Gratis:  /v1/sources, /health, /docs
 Bezahlt: A19 /v1/lei · A23 /v1/timezone, /v1/meeting-window · A24 /v1/sun-moon · A25 /v1/treasury-rate
-         A26 /v1/vat · A27 /v1/energy-calendar, /v1/energy-stocks · A28 /v1/vin
+         A26 /v1/vat · A28 /v1/vin   (A27 EIA am 1.11.2026 gelöscht)
 Jeder Agent hat einen eigenen Preis; daran erkennt der Einnahmen-Monitor, wer verkauft hat.
 """
 import os
@@ -92,7 +91,7 @@ def route(price, desc, tags, inp, schema, required, example):
 S = lambda d: {"type": "string", "description": d}
 
 # Preise (je Agent verschieden, für die Zuordnung im Monitor)
-A19, A23, A24, A25, A26, A27, A28 = "$0.012", "$0.013", "$0.014", "$0.015", "$0.016", "$0.017", "$0.018"
+A19, A23, A24, A25, A26, A28 = "$0.012", "$0.013", "$0.014", "$0.015", "$0.016", "$0.018"  # A27 am 1.11.2026 gelöscht
 ZONE = S("IANA time zone, e.g. Europe/Zurich, America/New_York, Asia/Tokyo")
 routes = {
     "GET /v1/lei": route(
@@ -139,18 +138,6 @@ routes = {
          "rate": S("'standard' or a valid rate like 7"), "amount_includes_vat": S("true if amount is gross")},
         [], {"country_code": "DE", "standard": 19, "reduced": [7],
              "calculation": {"rate_pct": 19, "net": 100.0, "vat": 19.0, "gross": 119.0}}),
-    "GET /v1/energy-calendar": route(
-        A27, "Returns upcoming release times (ET and UTC) of the EIA Weekly Petroleum Status Report and Natural "
-             "Gas Storage Report, shifted for US federal holidays.",
-        ["energy", "oil", "natural-gas", "calendar", "trading"], {"weeks": "4"},
-        {"weeks": S("Number of weeks (1-26)"), "date": S("Start date YYYY-MM-DD")}, [],
-        {"next": {"report": "petroleum", "release_et": "2026-11-04T10:30:00-05:00"}}),
-    "GET /v1/energy-stocks": route(
-        A27, "Returns the latest weekly US crude oil (ex SPR, SPR, Cushing), gasoline and distillate stocks and "
-             "natural gas storage with change versus the prior week (EIA).",
-        ["energy", "oil", "inventories", "natural-gas", "trading"], {"weeks": "2"},
-        {"weeks": S("History length in weeks (2-52)")}, [],
-        {"stocks": {"crude_ex_spr_kbbl": {"week_ending": "2026-10-23", "value": 421300, "change_vs_prior_week": -2100}}}),
     "GET /v1/vin": route(
         A28, "Decodes a 17-character vehicle identification number (NHTSA vPIC): make, model, year, trim, body, "
              "engine, fuel, drive, plant, and validates the check digit.",

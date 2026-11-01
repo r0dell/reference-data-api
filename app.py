@@ -1,4 +1,4 @@
-"""HTTP-API: Reference Data API (LEI, Zeitzonen, Sonne/Mond, Treasury-Kurse, EU-MwSt, EIA, VIN)."""
+"""HTTP-API: Reference Data API (LEI, Zeitzonen, Sonne/Mond, Treasury-Kurse, EU-MwSt, VIN)."""
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
@@ -12,7 +12,7 @@ app = FastAPI(
     version="0.1.0",
     description=("Reference lookups for agents: legal entity identifiers (GLEIF) with parents and ISINs, time zones "
                  "and meeting windows, sunrise/sunset and moon phase, official US Treasury reporting exchange rates, "
-                 "EU VAT rates with net/gross calculation, EIA energy report calendar and weekly stocks, and VIN "
+                 "EU VAT rates with net/gross calculation, and VIN "
                  "decoding (NHTSA). Every response names its source."),
 )
 
@@ -66,16 +66,6 @@ def vat_rates(country: Optional[str] = Query(None, examples=["DE"]), amount: Opt
     return _run(e.vat_rates, country, amount, rate, amount_includes_vat)
 
 
-@app.get("/v1/energy-calendar", summary="A27: Upcoming EIA petroleum and natural-gas storage report times")
-def energy_calendar(weeks: int = 4, date: Optional[str] = None):
-    return _run(e.energy_calendar, weeks, date)
-
-
-@app.get("/v1/energy-stocks", summary="A27: Latest weekly US crude, gasoline, distillate and gas storage")
-def energy_stocks(weeks: int = 2):
-    return _run(e.energy_stocks, weeks)
-
-
 @app.get("/v1/vin", summary="A28: Decode a vehicle identification number")
 def vin(vin: str = Query(..., examples=["1HGCM82633A004352"]), model_year: Optional[int] = None):
     return _run(e.vin_decode, vin, model_year)
@@ -83,9 +73,7 @@ def vin(vin: str = Query(..., examples=["1HGCM82633A004352"]), model_year: Optio
 
 @app.get("/v1/sources", summary="Data source status (free)")
 def sources():
-    import os
-    return {"status": src.STATUS, "vat_table_verified": vat.VERIFIED,
-            "eia_configured": bool(os.environ.get("EIA_API_KEY"))}
+    return {"status": src.STATUS, "vat_table_verified": vat.VERIFIED}
 
 
 @app.get("/health", include_in_schema=False)
