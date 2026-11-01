@@ -8,7 +8,8 @@ Umgebungsvariablen:
 
 Gratis:  /v1/sources, /health, /docs
 Bezahlt: A19 /v1/lei · A23 /v1/timezone, /v1/meeting-window · A24 /v1/sun-moon · A25 /v1/treasury-rate
-         A26 /v1/vat · A28 /v1/vin   (A27 EIA am 1.11.2026 gelöscht)
+         A26 /v1/vat · A28 /v1/vin · A30 /v1/iban, /v1/bic · A36 /v1/country, /v1/currency
+         (A27 EIA am 1.11.2026 gelöscht)
 Jeder Agent hat einen eigenen Preis; daran erkennt der Einnahmen-Monitor, wer verkauft hat.
 """
 import os
@@ -92,6 +93,7 @@ S = lambda d: {"type": "string", "description": d}
 
 # Preise (je Agent verschieden, für die Zuordnung im Monitor)
 A19, A23, A24, A25, A26, A28 = "$0.0245", "$0.0265", "$0.0285", "$0.0305", "$0.0325", "$0.0365"  # A27 am 1.11.2026 gelöscht
+A30, A36 = "$0.0225", "$0.0345"
 ZONE = S("IANA time zone, e.g. Europe/Zurich, America/New_York, Asia/Tokyo")
 routes = {
     "GET /v1/lei": route(
@@ -145,6 +147,38 @@ routes = {
         {"vin": S("17-character VIN"), "model_year": S("Optional model year hint")}, ["vin"],
         {"decoded": {"make": "HONDA", "model": "Accord", "model_year": "2003", "trim": "EX-V6"},
          "check_digit_valid": True}),
+    "GET /v1/iban": route(
+        A30, "Validates an IBAN (ISO 13616: country format, length, check digits and, where defined, the national "
+             "account check digit), formats it and splits it into bank code, branch code and account number, with "
+             "SEPA membership and the bank name/BIC where a national bank directory exists. For payment, invoicing "
+             "and onboarding agents. Does not prove that the account exists.",
+        ["payments", "iban", "banking", "validation", "sepa", "finance"], {"iban": "DE89370400440532013000"},
+        {"iban": S("IBAN, spaces allowed")}, ["iban"],
+        {"valid": True, "formatted": "DE89 3704 0044 0532 0130 00", "country_code": "DE", "sepa": True,
+         "bank_code": "37040044", "account_number": "0532013000",
+         "bank": {"name": "Commerzbank", "bic": "COBADEFFXXX"}}),
+    "GET /v1/bic": route(
+        A30, "Validates a BIC/SWIFT code (8 or 11 characters): bank, country, location and branch code, test-BIC "
+             "flag and known bank names.",
+        ["payments", "bic", "swift", "banking", "validation"], {"bic": "UBSWCHZH80A"},
+        {"bic": S("BIC/SWIFT code")}, ["bic"],
+        {"valid": True, "bank_code": "UBSW", "country_code": "CH", "location_code": "ZH", "branch_code": "80A",
+         "bank_names": ["UBS Switzerland AG - Zürich"]}),
+    "GET /v1/country": route(
+        A36, "ISO 3166 country lookup by alpha-2, alpha-3, numeric code or name (fuzzy): official name, codes, flag, "
+             "official currencies (ISO 4217) and optionally all ISO 3166-2 subdivisions (states, cantons, regions).",
+        ["reference", "iso", "country", "geography", "data-normalization"], {"code": "CH"},
+        {"code": S("Alpha-2, alpha-3, numeric code or country name"),
+         "subdivisions": S("true to list ISO 3166-2 subdivisions")}, ["code"],
+        {"alpha_2": "CH", "alpha_3": "CHE", "numeric": "756", "name": "Switzerland",
+         "official_name": "Swiss Confederation", "currencies": ["CHF"], "subdivisions_count": 26}),
+    "GET /v1/currency": route(
+        A36, "ISO 4217 currency lookup by code, numeric code or name: name, numeric code, minor units (decimal "
+             "places for amounts) and the countries that use it officially.",
+        ["reference", "iso", "currency", "fx", "payments", "data-normalization"], {"code": "CHF"},
+        {"code": S("Alpha-3 code, numeric code or currency name")}, ["code"],
+        {"code": "CHF", "numeric": "756", "name": "Swiss Franc", "minor_units": 2,
+         "used_in": [{"alpha_2": "CH", "name": "Switzerland"}, {"alpha_2": "LI", "name": "Liechtenstein"}]}),
 }
 
 app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=server)

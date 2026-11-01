@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Query
 
 import engine as e
+import ibanref
 import sources as src
 import vat
 
@@ -12,8 +13,8 @@ app = FastAPI(
     version="0.1.0",
     description=("Reference lookups for agents: legal entity identifiers (GLEIF) with parents and ISINs, time zones "
                  "and meeting windows, sunrise/sunset and moon phase, official US Treasury reporting exchange rates, "
-                 "EU VAT rates with net/gross calculation, and VIN "
-                 "decoding (NHTSA). Every response names its source."),
+                 "EU VAT rates with net/gross calculation, VIN "
+                 "decoding (NHTSA), IBAN/BIC validation and ISO country/currency codes. Every response names its source."),
 )
 
 
@@ -69,6 +70,26 @@ def vat_rates(country: Optional[str] = Query(None, examples=["DE"]), amount: Opt
 @app.get("/v1/vin", summary="A28: Decode a vehicle identification number")
 def vin(vin: str = Query(..., examples=["1HGCM82633A004352"]), model_year: Optional[int] = None):
     return _run(e.vin_decode, vin, model_year)
+
+
+@app.get("/v1/iban", summary="A30: Validate an IBAN and split it into bank code, branch and account number")
+def iban(iban: str = Query(..., examples=["CH9300762011623852957"])):
+    return _run(ibanref.iban_check, iban)
+
+
+@app.get("/v1/bic", summary="A30: Validate a BIC/SWIFT code and name the bank")
+def bic(bic: str = Query(..., examples=["UBSWCHZH80A"])):
+    return _run(ibanref.bic_check, bic)
+
+
+@app.get("/v1/country", summary="A36: ISO 3166 country lookup (codes, name, currency, subdivisions)")
+def country(code: str = Query(..., examples=["CH"]), subdivisions: bool = False):
+    return _run(ibanref.country_info, code, subdivisions)
+
+
+@app.get("/v1/currency", summary="A36: ISO 4217 currency lookup (numeric code, minor units, countries)")
+def currency(code: str = Query(..., examples=["CHF"])):
+    return _run(ibanref.currency_info, code)
 
 
 @app.get("/v1/sources", summary="Data source status (free)")

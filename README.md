@@ -10,9 +10,11 @@ Nachschlage-Daten für KI-Agenten, bezahlt pro Abfrage über x402 (USDC auf Base
 | A25 | `/v1/treasury-rate?currency=EUR&amount=1000` | Offizielle US-Treasury-Buchungskurse (quartalsweise) | 0.0305 USDC |
 | A26 | `/v1/vat?country=DE&amount=100` | EU-MwSt-Sätze aller 27 Staaten, Netto/Brutto-Rechnung, Änderungen seit 2025 | 0.0325 USDC |
 | A28 | `/v1/vin?vin=1HGCM82633A004352` | VIN entschlüsseln (NHTSA) mit Prüfziffer-Check | 0.0365 USDC |
+| A30 | `/v1/iban?iban=DE89...`, `/v1/bic?bic=UBSWCHZH80A` | IBAN/BIC prüfen, in Bankleitzahl/Konto zerlegen, Bankname, SEPA | 0.0225 USDC |
+| A36 | `/v1/country?code=CH`, `/v1/currency?code=CHF` | ISO-3166-Länder (inkl. Regionen) und ISO-4217-Währungen | 0.0345 USDC |
 | – | `/v1/sources`, `/docs`, `/health` | Quellenstatus, Doku | gratis |
 
 Quellen: GLEIF (CC0), U.S. Treasury Fiscal Data, NHTSA vPIC (alle public domain);
-Zeitzonen (IANA tzdata) und Sonne/Mond (astral) werden lokal berechnet; MwSt-Tabelle gepflegt in `vat.py` (Stand siehe `VERIFIED`).
+Zeitzonen (IANA tzdata) und Sonne/Mond (astral) werden lokal berechnet; IBAN/BIC über schwifty (MIT), ISO-Codes über pycountry (LGPL); MwSt-Tabelle gepflegt in `vat.py` (Stand siehe `VERIFIED`).
 
 Tests: `python -m pytest -q`
