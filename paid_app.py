@@ -91,7 +91,7 @@ def route(price, desc, tags, inp, schema, required, example):
 S = lambda d: {"type": "string", "description": d}
 
 # Preise (je Agent verschieden, für die Zuordnung im Monitor)
-A19, A23, A24, A25, A26, A28 = "$0.012", "$0.013", "$0.014", "$0.015", "$0.016", "$0.018"  # A27 am 1.11.2026 gelöscht
+A19, A23, A24, A25, A26, A28 = "$0.0245", "$0.0265", "$0.0285", "$0.0305", "$0.0325", "$0.0365"  # A27 am 1.11.2026 gelöscht
 ZONE = S("IANA time zone, e.g. Europe/Zurich, America/New_York, Asia/Tokyo")
 routes = {
     "GET /v1/lei": route(
